@@ -9,11 +9,12 @@ This is a simple Python-based app for displaying your Slack status fullscreen on
 ### Hardware Requirements
 * A Raspberry Pi. (Any model that can run Python 3 should work, but as a warning, this was only tested on a Raspberry Pi 5.)
 * A hardware display. 
+* SSH accesss to the Raspberry Pi.
   
 ### Setup
 
 #### OS Setup
-1. Run updates on your Pi `sudo apt-get update -y && sudo apt-get full-upgrade -y`
+1. Login to a shell and run updates on your Pi `sudo apt-get update -y && sudo apt-get full-upgrade -y`
 2. Install any necessary drivers for your display. 
    1. If you're using the same display I used, use the `LCD35-show` driver from [this repository](https://github.com/goodtft/LCD-show).
    2. Make sure to enable I2C or SPI via `sudo raspi-config` > Interface Options if needed. Refer to your hardware documentation to find out.
@@ -50,3 +51,7 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 7. Go ahead and test the application by running `python3 pi_slack_status.py`.
 
 #### Setting it as a Service
+1. Run `sudo chmod u+x service_mover.sh`. 
+2. Run `sudo ./service_mover.sh`
+3. You should see output from the `systemctl status` command for the `slack_status.service`. 
+4. You should see your Slack status running on the Pi! Enjoy! 
