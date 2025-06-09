@@ -48,3 +48,5 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 5. Create a `.env` file by copying `.env_sample`: `cp .env_sample .env`. 
 6. Paste in your User ID and Bot Token.
 7. Go ahead and test the application by running `python3 pi_slack_status.py`.
+
+#### Setting it as a Service
