@@ -1,0 +1,14 @@
+[Unit]
+Description=Slack Status Display Application
+After=network.target graphical.target
+
+[Service]
+ExecStart=/home/ubuntu/pi_slack_status/.venv/bin/python3 /home/ubuntu/pi_slack_status/slack_status_display.py
+WorkingDirectory=/home/ubuntu/slack_status
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=ubuntu # Make sure this matches your username
+
+[Install]
+WantedBy=multi-user.target

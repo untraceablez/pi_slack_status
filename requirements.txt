@@ -1,0 +1,3 @@
+pygame
+slack_sdk
+python_dotenv
