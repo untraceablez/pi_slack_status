@@ -41,25 +41,25 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
     
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 max-w-sm text-center transform transition-all duration-300 hover:scale-105">
-        <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-50">{{ first_name }}'s Slack Status</h1>
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-12 max-w-lg text-center transform transition-all duration-300 hover:scale-105">
+        <h1 class="text-5xl font-bold mb-6 text-gray-900 dark:text-gray-50">{{ first_name }}'s Slack Status</h1>
         
         {% if is_error %}
-            <div class="text-red-500 text-xl font-semibold mb-2">
+            <div class="text-3xl font-semibold mb-3 text-red-500">
                 {{ status_emoji_value }}
             </div>
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-2xl text-gray-600 dark:text-gray-400">
                 {{ status_text }}
             </p>
         {% else %}
-            <div class="flex items-center justify-center text-5xl mb-4">
+            <div class="flex items-center justify-center text-7xl mb-6">
                 {% if status_emoji_type == 'url' %}
                     <img src="{{ status_emoji_value }}" class="emoji-img" alt="Slack status emoji">
                 {% else %}
                     <span>{{ status_emoji_value }}</span>
                 {% endif %}
             </div>
-            <p class="text-xl font-semibold text-gray-700 dark:text-gray-300">
+            <p class="text-3xl font-semibold text-gray-700 dark:text-gray-300">
                 {{ status_text }}
             </p>
         {% endif %}

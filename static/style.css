@@ -3,12 +3,13 @@
 body {
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Custom styling for the emoji image to keep it centered and sized correctly */
 .emoji-img {
     display: inline-block;
     vertical-align: middle;
-    height: 3rem; /* Matches the size of a 5xl text emoji */
-    width: 3rem; /* Ensures the image is square */
+    height: 4.5rem; /* Matches the size of a 7xl text emoji, 50% larger than previous */
+    width: 4.5rem; /* Ensures the image is square */
 }
