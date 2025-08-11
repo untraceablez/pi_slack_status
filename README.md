@@ -43,11 +43,22 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 
 #### Repository Setup
 1. Clone this repository: `git clone https://github.com/untraceablez/pi_slack_status` and then `cd pi_slack_status`.
-2. Create a Python virtual environment named *.venv* using this command: `python3 -m venv .venv`
-3. Run `source .venv/bin/activate`. 
+2. Create a Python virtual environment named *.venv* using this command: `python3 -m venv $HOME/.venv/pi-slack`
+3. Run `source $HOME/.venv/pi-slack/bin/activate`. 
 4. Run `pip install -r requirements.txt` to install the various Python dependencies.
 5. Create a `.env` file by copying `.env_sample`: `cp .env_sample .env`. 
-6. Paste in your User ID and Bot Token.
+6. Paste in your User ID, API Token, and optionally, your Client Secret and Signing Secret (you'll need these if your Slack workspace enforces oAuth).
 7. Go ahead and test the application by running `python3 pi_slack_status.py`.
 
  
+#### Setup as a Service
+0. **Before you do the steps below, modify the .service file with the correct paths and usernames.**
+1. In order to set this up as a startup service on the pi, first make the `start_pi_status.sh` file executable: `sudo chmod +x ./start_pi_status.sh`. 
+2. Next, copy the contents of the `pi_status.service` file to your clipboard and create a systemd service file: `sudo nano /etc/systemd/system/pi_status.service` and paste the contents inside.
+3. Run the following commands to enable and start the service: 
+   ```
+   sudo systemctl enable pi_status.service
+   sudo systemctl start pi_status.service
+   sudo systemctl daemon-reload
+   ```
+4. You should be able to reboot the Pi and see the screen load. Enjoy your new Slack status kiosk!

@@ -77,17 +77,9 @@ def get_slack_status():
             
             # --- Emoji Handling Logic ---
             if status_emoji:
-                # Attempt to convert Slack's shortcode (e.g., :wave:) to a Unicode emoji.
-                emojized_string = emoji.emojize(status_emoji, language='en', version=2)
-                
-                # If the conversion failed (the string is unchanged), it's likely a custom emoji.
-                # In that case, we display the emoji name without the colons for a cleaner look.
-                if emojized_string == status_emoji:
-                    # Remove the emoji colons for a cleaner display
-                    if status_emoji.startswith(':') and status_emoji.endswith(':'):
-                        status_emoji = status_emoji[1:-1]
-                else:
-                    status_emoji = emojized_string
+                # Converts Slack's emoji shortcode (e.g., :wave:) to a Unicode emoji.
+                # If the shortcode is not found (e.g., a custom emoji), it will be returned as is.
+                status_emoji = emoji.emojize(status_emoji, language='en', version=2)
             # --- End of Emoji Handling ---
 
             return {
