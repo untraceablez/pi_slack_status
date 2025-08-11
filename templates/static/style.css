@@ -1,0 +1,68 @@
+/* static/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+body {
+    font-family: 'Inter', sans-serif;
+    /* Prevent horizontal scroll on small screens due to fixed toggle position */
+    overflow-x: hidden;
+}
+
+/* Custom styling for the toggle switch to create a Material Design look */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+/* Hide the default checkbox */
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider itself */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+/* Transition for the slider's color */
+.toggle-switch input:checked + .slider {
+    background-color: #2196F3; /* Material Design Blue */
+}
+
+/* The handle of the switch */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    /* Material Design shadow */
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
+}
+
+/* Move the handle when the switch is checked */
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Custom styling for the emoji image to keep it centered and sized correctly */
+.emoji-img {
+    display: inline-block;
+    vertical-align: middle;
+    height: 3rem; /* Matches the size of a 5xl text emoji */
+    width: 3rem; /* Ensures the image is square */
+}
