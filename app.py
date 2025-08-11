@@ -1,10 +1,11 @@
 # app.py
 # This is a Python Flask web application that serves your Slack status.
-# To run this, you need to have Flask, requests, and python-dotenv installed:
-# pip install Flask requests python-dotenv
+# To run this, you need to have Flask, requests, python-dotenv, and emoji installed:
+# pip install Flask requests python-dotenv emoji
 
 import os
 import requests
+import emoji
 from flask import Flask, render_template
 from dotenv import load_dotenv
 
@@ -74,9 +75,20 @@ def get_slack_status():
             status_text = profile.get('status_text', 'No status set')
             status_emoji = profile.get('status_emoji', '')
             
-            # Remove the emoji colons for a cleaner display
-            if status_emoji.startswith(':') and status_emoji.endswith(':'):
-                status_emoji = status_emoji[1:-1]
+            # --- Emoji Handling Logic ---
+            if status_emoji:
+                # Attempt to convert Slack's shortcode (e.g., :wave:) to a Unicode emoji.
+                emojized_string = emoji.emojize(status_emoji, language='en', version=2)
+                
+                # If the conversion failed (the string is unchanged), it's likely a custom emoji.
+                # In that case, we display the emoji name without the colons for a cleaner look.
+                if emojized_string == status_emoji:
+                    # Remove the emoji colons for a cleaner display
+                    if status_emoji.startswith(':') and status_emoji.endswith(':'):
+                        status_emoji = status_emoji[1:-1]
+                else:
+                    status_emoji = emojized_string
+            # --- End of Emoji Handling ---
 
             return {
                 'ok': True,

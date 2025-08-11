@@ -2,3 +2,4 @@ slack_sdk
 python_dotenv
 flask
 requests
+emoji
