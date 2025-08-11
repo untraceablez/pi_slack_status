@@ -15,17 +15,32 @@
     
     <!-- Refresh the page every 30 seconds to get the latest status -->
     <meta http-equiv="refresh" content="30">
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const htmlElement = document.documentElement;
+
+            const setTheme = (isDark) => {
+                if (isDark) {
+                    htmlElement.classList.add('dark');
+                } else {
+                    htmlElement.classList.remove('dark');
+                }
+            };
+
+            // Set the initial theme based on the system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+            setTheme(prefersDark.matches);
+
+            // Listen for changes in the system theme preference and update the site
+            prefersDark.addEventListener('change', (e) => {
+                setTheme(e.matches);
+            });
+        });
+    </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
     
-    <!-- Material Design Toggle Switch for Dark Mode -->
-    <div class="fixed top-4 right-4 z-50">
-        <label class="toggle-switch">
-            <input type="checkbox" id="theme-toggle">
-            <span class="slider"></span>
-        </label>
-    </div>
-
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 max-w-sm text-center transform transition-all duration-300 hover:scale-105">
         <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-50">{{ first_name }}'s Slack Status</h1>
         
@@ -49,9 +64,5 @@
             </p>
         {% endif %}
     </div>
-    
-    <!-- Link to the custom JavaScript -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-
 </body>
 </html>
