@@ -16,17 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Initial check for local storage or system preference
+    // Initial check: Prioritize the user's last choice from local storage.
+    // If no choice exists, use the system's preference.
     const storedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-        setDarkMode(true);
-    } else {
-        setDarkMode(false);
-    }
+    // Determine the initial state of the dark mode.
+    const initialDark = storedTheme === 'dark' || (!storedTheme && prefersDark);
+    setDarkMode(initialDark);
 
-    // Add a change event listener to the toggle checkbox
+    // Add a change event listener to the toggle checkbox.
+    // This is the most reliable way to detect user interaction with the toggle.
     themeToggle.addEventListener('change', (event) => {
         setDarkMode(event.target.checked);
     });
