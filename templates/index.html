@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Slack Status</title>
+    <title>{{ first_name }}'s Slack Status</title>
     <!-- Use Tailwind CSS for easy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -40,7 +40,7 @@
     </button>
 
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 max-w-sm text-center transform transition-all duration-300 hover:scale-105">
-        <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">My Slack Status</h1>
+        <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">{{ first_name }}'s Slack Status</h1>
         
         {% if is_error %}
             <div class="text-red-500 dark:text-red-400 text-xl font-semibold mb-2">

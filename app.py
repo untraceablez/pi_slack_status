@@ -77,6 +77,7 @@ def get_slack_status():
 
         if response.get('ok'):
             profile = response.get('profile', {})
+            first_name = profile.get('first_name', 'My')
             status_text = profile.get('status_text', 'No status set')
             status_emoji = profile.get('status_emoji', '')
             
@@ -98,6 +99,7 @@ def get_slack_status():
 
             return {
                 'ok': True,
+                'first_name': first_name,
                 'status_text': status_text,
                 'status_emoji': emoji_info,
             }
@@ -135,12 +137,14 @@ def home():
 
     if not status_data['ok']:
         return render_template('index.html', 
+                               first_name='My',
                                status_emoji_value='❌', 
                                status_emoji_type='text',
                                status_text=f"Error: {status_data['error']}",
                                is_error=True)
 
     return render_template('index.html',
+                           first_name=status_data['first_name'],
                            status_emoji_value=status_data['status_emoji']['value'],
                            status_emoji_type=status_data['status_emoji']['type'],
                            status_text=status_data['status_text'],
