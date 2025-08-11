@@ -1,19 +1,32 @@
 # app.py
 # This is a Python Flask web application that serves your Slack status.
-# To run this, you need to have Flask and requests installed:
-# pip install Flask requests
+# To run this, you need to have Flask, requests, and python-dotenv installed:
+# pip install Flask requests python-dotenv
 
 import os
 import requests
 from flask import Flask, render_template
+from dotenv import load_dotenv
+
+# Load environment variables from the .env file.
+# This must be called before trying to access any variables.
+load_dotenv()
 
 # --- Configuration ---
-# You MUST replace 'YOUR_SLACK_API_TOKEN' with your actual Slack API token.
-# You can get this from https://api.slack.com/apps/ and create a new app.
+# Get your Slack API token from the .env file.
 # The token needs the 'users.profile:read' scope.
-# Note: It's a good practice to store this in an environment variable, but for simplicity,
-# we are hardcoding it here.
-SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN', 'YOUR_SLACK_API_TOKEN')
+SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
+
+# Get the Slack User ID from the .env file.
+# This is the user whose status will be displayed.
+SLACK_USER_ID = os.environ.get('SLACK_USER_ID')
+
+# Note: Client Secret and Signing Secret are typically used for a full
+# Slack app with events and interactivity. For simply reading a user's status,
+# only the SLACK_API_TOKEN is required.
+SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
+
 
 # You can change the port if you need to.
 PORT = 5000
@@ -25,17 +38,34 @@ app = Flask(__name__)
 
 def get_slack_status():
     """
-    Fetches the current user's profile from the Slack API.
+    Fetches the profile of the specified user from the Slack API.
     Returns a dictionary with status information or an error message.
     """
+    # Check if necessary environment variables are set
+    if not SLACK_API_TOKEN:
+        return {
+            'ok': False,
+            'error': 'Slack API Token not found in environment variables.'
+        }
+    if not SLACK_USER_ID:
+        return {
+            'ok': False,
+            'error': 'Slack User ID not found in environment variables.'
+        }
+
     headers = {
         'Authorization': f'Bearer {SLACK_API_TOKEN}',
         'Content-type': 'application/json'
     }
     url = 'https://slack.com/api/users.profile.get'
     
+    # Pass the user ID as a parameter to the API call
+    params = {
+        'user': SLACK_USER_ID
+    }
+    
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
