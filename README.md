@@ -52,7 +52,7 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 
  
 #### Setup as a Service
-0. **Before you do the steps below, modify the .service file with the correct paths and usernames.**
+0. **Before you do the steps below, modify the .service file with the correct paths and usernames. I use Ansible in my homelab, and thus have ansible username instead of the default 'pi'**
 1. In order to set this up as a startup service on the pi, first make the `start_pi_status.sh` file executable: `sudo chmod +x ./start_pi_status.sh`. 
 2. Next, copy the contents of the `pi_status.service` file to your clipboard and create a systemd service file: `sudo nano /etc/systemd/system/pi_status.service` and paste the contents inside.
 3. Run the following commands to enable and start the service: 
