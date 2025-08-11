@@ -1,16 +1,16 @@
 # app.py
 # This is a Python Flask web application that serves your Slack status.
-# To run this, you need to have Flask, requests, python-dotenv, and emoji installed:
-# pip install Flask requests python-dotenv emoji
+# To run this, you need to have Flask, python-dotenv, slack_sdk, and emoji installed:
+# pip install Flask python-dotenv slack_sdk emoji
 
 import os
-import requests
-import emoji
 from flask import Flask, render_template
 from dotenv import load_dotenv
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+import emoji
 
 # Load environment variables from the .env file.
-# This must be called before trying to access any variables.
 load_dotenv()
 
 # --- Configuration ---
@@ -22,24 +22,41 @@ SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
 # This is the user whose status will be displayed.
 SLACK_USER_ID = os.environ.get('SLACK_USER_ID')
 
-# Note: Client Secret and Signing Secret are typically used for a full
-# Slack app with events and interactivity. For simply reading a user's status,
-# only the SLACK_API_TOKEN is required.
-SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
-SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
-
-
 # You can change the port if you need to.
 PORT = 5000
+
+# Global variable to cache custom emojis
+custom_emojis = {}
 
 # --- App Setup ---
 app = Flask(__name__)
 
+# Initialize the Slack WebClient with your token
+# This is the primary way to interact with the Slack API using the SDK.
+client = WebClient(token=SLACK_API_TOKEN)
+
 # --- Functions ---
+
+def get_custom_emojis():
+    """
+    Fetches and caches all custom emojis from the Slack workspace.
+    """
+    global custom_emojis
+    try:
+        response = client.emoji_list()
+        if response['ok']:
+            custom_emojis = response['emoji']
+            print("Successfully fetched custom emojis.")
+        else:
+            print(f"Failed to fetch custom emojis: {response['error']}")
+    except SlackApiError as e:
+        print(f"Error fetching custom emojis: {e.response['error']}")
+    except Exception as e:
+        print(f"An unexpected error occurred while fetching emojis: {e}")
 
 def get_slack_status():
     """
-    Fetches the profile of the specified user from the Slack API.
+    Fetches the profile of the specified user from the Slack API using slack_sdk.
     Returns a dictionary with status information or an error message.
     """
     # Check if necessary environment variables are set
@@ -53,50 +70,53 @@ def get_slack_status():
             'ok': False,
             'error': 'Slack User ID not found in environment variables.'
         }
-
-    headers = {
-        'Authorization': f'Bearer {SLACK_API_TOKEN}',
-        'Content-type': 'application/json'
-    }
-    url = 'https://slack.com/api/users.profile.get'
-    
-    # Pass the user ID as a parameter to the API call
-    params = {
-        'user': SLACK_USER_ID
-    }
     
     try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-        data = response.json()
+        # Call the users_profile_get API method with the specified user ID
+        response = client.users_profile_get(user=SLACK_USER_ID)
 
-        if data.get('ok'):
-            profile = data.get('profile', {})
+        if response.get('ok'):
+            profile = response.get('profile', {})
             status_text = profile.get('status_text', 'No status set')
             status_emoji = profile.get('status_emoji', '')
             
             # --- Emoji Handling Logic ---
+            emoji_info = {'type': 'text', 'value': ''}
             if status_emoji:
-                # Converts Slack's emoji shortcode (e.g., :wave:) to a Unicode emoji.
-                # If the shortcode is not found (e.g., a custom emoji), it will be returned as is.
-                status_emoji = emoji.emojize(status_emoji, language='en', version=2)
+                # Get the name of the emoji without the colons
+                emoji_name = status_emoji.strip(':')
+
+                # Check if the emoji is a custom one by looking it up in our cached list
+                if emoji_name in custom_emojis:
+                    emoji_info['type'] = 'url'
+                    emoji_info['value'] = custom_emojis[emoji_name]
+                else:
+                    # It's a shortcode, so use the 'emoji' library to convert it.
+                    converted_emoji = emoji.emojize(status_emoji)
+                    emoji_info['value'] = converted_emoji
             # --- End of Emoji Handling ---
 
             return {
                 'ok': True,
                 'status_text': status_text,
-                'status_emoji': status_emoji,
+                'status_emoji': emoji_info,
             }
         else:
             return {
                 'ok': False,
-                'error': data.get('error', 'Unknown Slack API error')
+                'error': response.get('error', 'Unknown Slack API error')
             }
-    except requests.exceptions.RequestException as e:
-        # Handle network-related errors
+    except SlackApiError as e:
+        # Handle API-related errors
         return {
             'ok': False,
-            'error': f'Network Error: {e}'
+            'error': f'Slack API Error: {e.response["error"]}'
+        }
+    except Exception as e:
+        # Handle other unexpected errors
+        return {
+            'ok': False,
+            'error': f'An unexpected error occurred: {e}'
         }
 
 # --- Routes ---
@@ -107,16 +127,22 @@ def home():
     This is the main route. It fetches the Slack status and renders
     the HTML template to display it.
     """
+    # Fetch custom emojis once when the app starts
+    if not custom_emojis:
+        get_custom_emojis()
+
     status_data = get_slack_status()
 
     if not status_data['ok']:
         return render_template('index.html', 
-                               status_emoji='❌', 
+                               status_emoji_value='❌', 
+                               status_emoji_type='text',
                                status_text=f"Error: {status_data['error']}",
                                is_error=True)
 
     return render_template('index.html',
-                           status_emoji=status_data['status_emoji'],
+                           status_emoji_value=status_data['status_emoji']['value'],
+                           status_emoji_type=status_data['status_emoji']['type'],
                            status_text=status_data['status_text'],
                            is_error=False)
 

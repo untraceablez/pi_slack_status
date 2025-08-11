@@ -14,30 +14,92 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        /* Custom styling for the emoji image to keep it centered and sized correctly */
+        .emoji-img {
+            display: inline-block;
+            vertical-align: middle;
+            height: 3rem; /* Matches the size of a 5xl text emoji */
+            width: 3rem; /* Ensures the image is square */
+        }
     </style>
     <!-- Refresh the page every 30 seconds to get the latest status -->
     <meta http-equiv="refresh" content="30">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
+    
+    <!-- Dark Mode Toggle Button -->
+    <button id="theme-toggle" type="button" class="fixed top-4 right-4 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors duration-200">
+        <!-- Sun icon -->
+        <svg id="theme-toggle-light-icon" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <!-- Moon icon -->
+        <svg id="theme-toggle-dark-icon" class="hidden w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 max-w-sm text-center transform transition-all duration-300 hover:scale-105">
-        <h1 class="text-3xl font-bold mb-4">My Slack Status</h1>
+        <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">My Slack Status</h1>
         
         {% if is_error %}
-            <div class="text-red-500 text-xl font-semibold mb-2">
-                {{ status_emoji }}
+            <div class="text-red-500 dark:text-red-400 text-xl font-semibold mb-2">
+                {{ status_emoji_value }}
             </div>
             <p class="text-gray-600 dark:text-gray-400">
                 {{ status_text }}
             </p>
         {% else %}
             <div class="flex items-center justify-center text-5xl mb-4">
-                {{ status_emoji | safe }}
+                {% if status_emoji_type == 'url' %}
+                    <img src="{{ status_emoji_value }}" class="emoji-img" alt="Slack status emoji">
+                {% else %}
+                    <span>{{ status_emoji_value }}</span>
+                {% endif %}
             </div>
             <p class="text-xl font-semibold text-gray-700 dark:text-gray-200">
                 {{ status_text }}
             </p>
         {% endif %}
-
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const htmlElement = document.documentElement;
+
+            const setDarkMode = (isDark) => {
+                if (isDark) {
+                    htmlElement.classList.add('dark');
+                    themeToggleDarkIcon.classList.remove('hidden');
+                    themeToggleLightIcon.classList.add('hidden');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.classList.remove('dark');
+                    themeToggleLightIcon.classList.remove('hidden');
+                    themeToggleDarkIcon.classList.add('hidden');
+                    localStorage.setItem('theme', 'light');
+                }
+            };
+
+            // Initial check for local storage or system preference
+            const storedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                setDarkMode(true);
+            } else {
+                setDarkMode(false);
+            }
+
+            // Add an event listener to the toggle button
+            themeToggleBtn.addEventListener('click', () => {
+                const isCurrentlyDark = htmlElement.classList.contains('dark');
+                setDarkMode(!isCurrentlyDark);
+            });
+        });
+    </script>
 </body>
 </html>
