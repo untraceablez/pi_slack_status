@@ -50,8 +50,4 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 6. Paste in your User ID and Bot Token.
 7. Go ahead and test the application by running `python3 pi_slack_status.py`.
 
-#### Setting it as a Service
-1. Run `sudo chmod u+x service_mover.sh`. 
-2. Run `sudo ./service_mover.sh`
-3. You should see output from the `systemctl status` command for the `slack_status.service`. 
-4. You should see your Slack status running on the Pi! Enjoy! 
+ 

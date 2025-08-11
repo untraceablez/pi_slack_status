@@ -1,0 +1,43 @@
+<!-- templates/index.html -->
+<!-- This is the HTML template that the Flask app will render. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Slack Status</title>
+    <!-- Use Tailwind CSS for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <!-- Refresh the page every 30 seconds to get the latest status -->
+    <meta http-equiv="refresh" content="30">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 max-w-sm text-center transform transition-all duration-300 hover:scale-105">
+        <h1 class="text-3xl font-bold mb-4">My Slack Status</h1>
+        
+        {% if is_error %}
+            <div class="text-red-500 text-xl font-semibold mb-2">
+                {{ status_emoji }}
+            </div>
+            <p class="text-gray-600 dark:text-gray-400">
+                {{ status_text }}
+            </p>
+        {% else %}
+            <div class="flex items-center justify-center text-5xl mb-4">
+                {{ status_emoji | safe }}
+            </div>
+            <p class="text-xl font-semibold text-gray-700 dark:text-gray-200">
+                {{ status_text }}
+            </p>
+        {% endif %}
+
+    </div>
+</body>
+</html>
