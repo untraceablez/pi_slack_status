@@ -4,20 +4,20 @@ After=network.target graphical.target
 
 [Service]
 # User and group to run the service as.
-# IMPORTANT: Change 'ansible' to your actual Raspberry Pi username if it's different.
-User=ansible
-Group=ansible
+# IMPORTANT: Change 'pi' to your actual Raspberry Pi username if it's different.
+User=pi
+Group=pi
 
 # The type of service. 'simple' means the process will be the main process.
 Type=simple
 
 # The command to execute. This points to the shell script we created.
 # IMPORTANT: Change the path if you saved the script in a different location.
-ExecStart=/home/ansible/Projects/pi_slack_status/start_pi_status.sh
+ExecStart=/home/pi/Projects/pi_slack_status/start_pi_status.sh
 
 # The working directory for the script.
 # IMPORTANT: Change the path if your repository is in a different location.
-WorkingDirectory=/home/ansible/Projects/pi_slack_status
+WorkingDirectory=/home/pi/Projects/pi_slack_status
 
 # Ensure the service restarts if it fails for any reason.
 Restart=always
