@@ -4,6 +4,8 @@
 
 This is a simple Python-based app for displaying your Slack status fullscreen on a Raspberry Pi. I designed the app around the display I'm [using](https://www.microcenter.com/product/632693/inland-35-inch-tft-lcd-touch-screen-monitor) but you can adjust the code to use whatever display output you need. 
 
+![A preview of the rendered webpage.](./preview.png)
+
 ## Dependencies & Setup
 
 ### Hardware Requirements
