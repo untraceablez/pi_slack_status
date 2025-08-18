@@ -4,7 +4,7 @@ After=network.target graphical.target
 
 [Service]
 # User and group to run the service as.
-# IMPORTANT: Change 'pi' to your actual Raspberry Pi username if it's different.
+# IMPORTANT: Change 'ansible' to your actual Raspberry Pi username if it's different.
 User=ansible
 Group=ansible
 
