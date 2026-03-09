@@ -70,9 +70,9 @@ def get_lastfm_now_playing():
 
         track = tracks[0]
 
-        # Last.fm only sets @attr.nowplaying when the track is actively playing
-        if track.get('@attr', {}).get('nowplaying') != 'true':
-            return None, None, None
+        # Use the nowplaying track if present (some clients send this),
+        # otherwise fall back to the most recently scrobbled track.
+        # Qobuz only scrobbles after a track finishes, so nowplaying is rarely set.
 
         title  = track.get('name')
         artist = track.get('artist', {}).get('#text')
