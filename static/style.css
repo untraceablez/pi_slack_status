@@ -1,8 +1,36 @@
 /* static/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+@font-face {
+    font-family: 'MononokiNerdFont';
+    src: url('/fonts/MononokiNerdFontPropo-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'MononokiNerdFont';
+    src: url('/fonts/MononokiNerdFontPropo-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'MononokiNerdFont';
+    src: url('/fonts/MononokiNerdFontPropo-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'MononokiNerdFont';
+    src: url('/fonts/MononokiNerdFontPropo-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+}
+
 body {
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
+    font-family: 'MononokiNerdFont', monospace;
+    overflow: hidden;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -10,6 +38,6 @@ body {
 .emoji-img {
     display: inline-block;
     vertical-align: middle;
-    height: 4.5rem; /* Matches the size of a 7xl text emoji, 50% larger than previous */
-    width: 4.5rem; /* Ensures the image is square */
+    height: 6rem; /* Matches text-8xl */
+    width: 6rem;
 }

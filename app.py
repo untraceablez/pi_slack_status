@@ -8,7 +8,7 @@ import asyncio
 import threading
 import tempfile
 import time
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -102,12 +102,13 @@ def music_recognition_loop():
                 title, artist, cover_art = identify_track(tmp_path)
 
                 with music_lock:
-                    if title:
-                        current_track['title'] = title
-                        current_track['artist'] = artist
-                        current_track['cover_art'] = cover_art
-                    current_track['last_checked'] = time.time()
-                print(f"Music identified: {artist} - {title}" if title else "No music detected (keeping previous track).")
+                    current_track = {
+                        'title': title,
+                        'artist': artist,
+                        'cover_art': cover_art,
+                        'last_checked': time.time(),
+                    }
+                print(f"Music identified: {artist} - {title}" if title else "No music detected.")
             except Exception as e:
                 print(f"Music recognition error: {e}")
                 with music_lock:
@@ -218,6 +219,11 @@ def home():
                            track_title=track_title,
                            track_artist=track_artist,
                            track_cover_art=track_cover_art)
+
+
+@app.route('/fonts/<path:filename>')
+def fonts(filename):
+    return send_from_directory('fonts', filename)
 
 
 @app.route('/debug-music')

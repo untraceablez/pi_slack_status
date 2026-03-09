@@ -2,89 +2,64 @@
 <!-- This is the HTML template that the Flask app will render. -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ first_name }}'s Status</title>
-    <!-- Use Tailwind CSS for easy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Link to the custom stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <!-- Refresh the page every 10 seconds to get the latest status -->
+    <style>
+        body { font-family: 'MononokiNerdFont', monospace !important; }
+    </style>
     <meta http-equiv="refresh" content="10">
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const htmlElement = document.documentElement;
-
-            const setTheme = (isDark) => {
-                if (isDark) {
-                    htmlElement.classList.add('dark');
-                } else {
-                    htmlElement.classList.remove('dark');
-                }
-            };
-
-            // Set the initial theme based on the system preference
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-            setTheme(prefersDark.matches);
-
-            // Listen for changes in the system theme preference and update the site
-            prefersDark.addEventListener('change', (e) => {
-                setTheme(e.matches);
-            });
-        });
-    </script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
+<body class="bg-gray-950 text-gray-50 h-screen w-screen overflow-hidden flex items-center justify-center px-10">
 
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-12 max-w-lg w-full text-center transform transition-all duration-300 hover:scale-105">
-        <h1 class="text-5xl font-bold mb-6 text-gray-900 dark:text-gray-50">{{ first_name }}'s Slack Status</h1>
+    <div class="w-full flex items-center gap-0">
 
-        {% if is_error %}
-            <div class="text-3xl font-semibold mb-3 text-red-500">
-                {{ status_emoji_value }}
-            </div>
-            <p class="text-2xl text-gray-600 dark:text-gray-400">
-                {{ status_text }}
-            </p>
-        {% else %}
-            <div class="flex items-center justify-center text-7xl mb-6">
-                {% if status_emoji_type == 'url' %}
-                    <img src="{{ status_emoji_value }}" class="emoji-img" alt="Slack status emoji">
-                {% else %}
-                    <span>{{ status_emoji_value }}</span>
-                {% endif %}
-            </div>
-            <p class="text-3xl font-semibold text-gray-700 dark:text-gray-300">
-                {{ status_text }}
-            </p>
-        {% endif %}
+        <!-- Left Panel: Slack Status -->
+        <div class="flex-1 flex flex-col items-center justify-center text-center pr-10 border-r border-gray-700">
+            <p class="text-xs uppercase tracking-widest text-gray-500 mb-4">{{ first_name }}'s Slack Status</p>
 
-        <!-- Music Now Playing Section -->
-        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            {% if track_title %}
-                <p class="text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Now Playing</p>
-                <div class="flex items-center justify-center gap-4">
-                    {% if track_cover_art %}
-                        <img src="{{ track_cover_art }}" alt="Album art" class="w-16 h-16 rounded-lg shadow-md flex-shrink-0">
+            {% if is_error %}
+                <div class="text-5xl mb-4 text-red-500">{{ status_emoji_value }}</div>
+                <p class="text-xl text-gray-400">{{ status_text }}</p>
+            {% else %}
+                <div class="flex items-center justify-center text-8xl mb-5">
+                    {% if status_emoji_type == 'url' %}
+                        <img src="{{ status_emoji_value }}" class="emoji-img" alt="Slack status emoji">
                     {% else %}
-                        <span class="text-4xl flex-shrink-0">🎵</span>
+                        <span>{{ status_emoji_value }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-3xl font-semibold text-gray-200">{{ status_text }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Right Panel: Now Playing -->
+        <div class="flex-1 flex flex-col items-center justify-center text-center pl-10">
+            {% if track_title %}
+                <p class="text-xs uppercase tracking-widest text-gray-500 mb-4">Now Playing</p>
+                <div class="flex items-center gap-5">
+                    {% if track_cover_art %}
+                        <img src="{{ track_cover_art }}" alt="Album art" class="w-28 h-28 rounded-xl shadow-lg flex-shrink-0">
+                    {% else %}
+                        <span class="text-6xl flex-shrink-0">🎵</span>
                     {% endif %}
                     <div class="text-left">
-                        <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ track_title }}</p>
+                        <p class="text-2xl font-semibold text-gray-100 leading-snug">{{ track_title }}</p>
                         {% if track_artist %}
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ track_artist }}</p>
+                            <p class="text-base text-gray-400 mt-1">{{ track_artist }}</p>
                         {% endif %}
                     </div>
                 </div>
             {% else %}
-                <p class="text-sm text-gray-400 dark:text-gray-600 italic">No music detected</p>
+                <span class="text-5xl mb-4">🎵</span>
+                <p class="text-sm text-gray-600 italic">No music detected</p>
             {% endif %}
         </div>
+
     </div>
 </body>
 </html>
