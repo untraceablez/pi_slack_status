@@ -12,7 +12,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import emoji
 
-load_dotenv()
+load_dotenv(os.path.expanduser('~/.env'))
 
 # --- Configuration ---
 SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
