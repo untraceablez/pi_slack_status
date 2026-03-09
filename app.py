@@ -77,11 +77,11 @@ def get_lastfm_now_playing():
         title  = track.get('name')
         artist = track.get('artist', {}).get('#text')
 
-        # Pick the largest available image
+        # Pick the largest available image, skipping Last.fm's blank placeholder
         cover_art = None
         for img in reversed(track.get('image', [])):
             url = img.get('#text', '').strip()
-            if url:
+            if url and '2a96cbd8b46e442fc41c2b86b821562f' not in url:
                 cover_art = url
                 break
 
@@ -102,12 +102,11 @@ def lastfm_poll_loop():
         if time.time() - last_checked >= POLL_INTERVAL:
             title, artist, cover_art = get_lastfm_now_playing()
             with music_lock:
-                current_track = {
-                    'title':        title,
-                    'artist':       artist,
-                    'cover_art':    cover_art,
-                    'last_checked': time.time(),
-                }
+                if title:
+                    current_track['title']     = title
+                    current_track['artist']    = artist
+                    current_track['cover_art'] = cover_art
+                current_track['last_checked'] = time.time()
             print(f"Now playing: {artist} - {title}" if title else "Nothing playing.")
 
         time.sleep(5)
