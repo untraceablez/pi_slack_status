@@ -8,7 +8,7 @@ import asyncio
 import threading
 import tempfile
 import time
-from flask import Flask, render_template, jsonify, send_from_directory
+from flask import Flask, render_template, jsonify
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -219,11 +219,6 @@ def home():
                            track_title=track_title,
                            track_artist=track_artist,
                            track_cover_art=track_cover_art)
-
-
-@app.route('/fonts/<path:filename>')
-def fonts(filename):
-    return send_from_directory('fonts', filename)
 
 
 @app.route('/debug-music')
