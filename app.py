@@ -214,13 +214,43 @@ def home():
 
 @app.route('/debug-music')
 def debug_music():
-    """Forces an immediate Last.fm poll and returns the raw result as JSON."""
-    title, artist, cover_art = get_lastfm_now_playing()
+    """Forces an immediate Last.fm poll and returns diagnostic info as JSON."""
+    config = {
+        'LAST_FM_API_KEY_set':  bool(LASTFM_API_KEY),
+        'LAST_FM_USERNAME_set': bool(LASTFM_USERNAME),
+        'LAST_FM_USERNAME':     LASTFM_USERNAME,
+    }
+
+    raw_response = None
+    parse_error  = None
+    title = artist = cover_art = None
+
+    try:
+        resp = requests.get(
+            'https://ws.audioscrobbler.com/2.0/',
+            params={
+                'method':  'user.getrecenttracks',
+                'user':    LASTFM_USERNAME,
+                'api_key': LASTFM_API_KEY,
+                'format':  'json',
+                'limit':   1,
+            },
+            timeout=10,
+        )
+        raw_response = resp.json()
+        title, artist, cover_art = get_lastfm_now_playing()
+    except Exception as e:
+        parse_error = str(e)
+
     return jsonify({
-        'ok':        True,
-        'title':     title,
-        'artist':    artist,
-        'cover_art': cover_art,
+        'config':       config,
+        'raw_response': raw_response,
+        'parsed': {
+            'title':     title,
+            'artist':    artist,
+            'cover_art': cover_art,
+        },
+        'error': parse_error,
     })
 
 
