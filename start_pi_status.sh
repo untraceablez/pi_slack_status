@@ -5,7 +5,7 @@
 # Chromium browser in kiosk mode to display the web page.
 
 # IMPORTANT: Replace 'pi' with your actual username if it's different.
-# This assumes your repository is cloned to /home/$USERN_NAME/pi_slack_status.
+# This assumes your repository is cloned to /home/$USER_NAME/pi_slack_status.
 REPO_PATH="/home/$USER_NAME/Projects/pi_slack_status"
 VENV_PATH="/home/$USER_NAME/.venv/pi-slack"
 USER_NAME="ansible"
