@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ first_name }}'s Status</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rakkas&family=Arvo:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -13,62 +12,52 @@
     <meta http-equiv="refresh" content="10">
 </head>
 <body>
-    <div class="content">
+    <div class="page">
 
         <!-- Heading -->
-        <h1 class="font-rakkas text-5xl text-white mb-8 drop-shadow-lg">
-            {{ first_name }}'s Slack Status:
-        </h1>
+        <h1 class="heading">{{ first_name }}'s Slack Status:</h1>
 
         <!-- Slack Status Row -->
-        <div class="flex items-center gap-6 mb-8">
+        <div class="row">
             {% if is_error %}
-                <span class="text-5xl">❌</span>
-                <p class="font-arvo text-2xl text-white drop-shadow">{{ status_text }}</p>
+                <span class="emoji-cell">❌</span>
+                <p class="status-text">{{ status_text }}</p>
             {% else %}
-                <div class="text-6xl leading-none flex-shrink-0">
+                <div class="emoji-cell">
                     {% if status_emoji_type == 'url' %}
                         <img src="{{ status_emoji_value }}" class="emoji-img" alt="status emoji">
                     {% else %}
                         <span>{{ status_emoji_value }}</span>
                     {% endif %}
                 </div>
-                <p class="font-arvo text-2xl text-white drop-shadow">{{ status_text }}</p>
+                <p class="status-text">{{ status_text }}</p>
             {% endif %}
         </div>
 
-        <!-- Divider -->
-        <div class="border-t border-white/30 mb-8"></div>
+        <hr class="divider">
 
         <!-- Music Row -->
-        {% if track_title %}
-            <div class="flex items-center gap-6">
-                {% if track_cover_art %}
-                    <img src="{{ track_cover_art }}" alt="Album art" class="w-24 h-24 rounded-lg shadow-xl flex-shrink-0">
-                {% else %}
-                    <div class="w-24 h-24 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <span class="text-4xl">🎵</span>
-                    </div>
-                {% endif %}
-                <div>
-                    <p class="font-arvo text-sm text-white/60 uppercase tracking-widest mb-1">Now Listening To:</p>
-                    <p class="font-arvo text-xl font-bold text-white drop-shadow">{{ track_title }}</p>
+        <div class="row">
+            {% if track_cover_art %}
+                <img src="{{ track_cover_art }}" alt="Album art" class="cover-art">
+            {% else %}
+                <div class="cover-placeholder">🎵</div>
+            {% endif %}
+
+            <div class="music-info">
+                <p class="music-label">Now Listening To:</p>
+                {% if is_detecting %}
+                    <p class="music-detecting">Detecting...</p>
+                {% elif track_title %}
+                    <p class="track-title">{{ track_title }}</p>
                     {% if track_artist %}
-                        <p class="font-arvo text-base italic text-white/80 mt-0.5">{{ track_artist }}</p>
+                        <p class="track-artist">{{ track_artist }}</p>
                     {% endif %}
-                </div>
+                {% else %}
+                    <p class="music-idle">No music detected</p>
+                {% endif %}
             </div>
-        {% else %}
-            <div class="flex items-center gap-6">
-                <div class="w-24 h-24 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <span class="text-4xl">🎵</span>
-                </div>
-                <div>
-                    <p class="font-arvo text-sm text-white/60 uppercase tracking-widest mb-1">Now Listening To:</p>
-                    <p class="font-arvo text-base italic text-white/50">No music detected</p>
-                </div>
-            </div>
-        {% endif %}
+        </div>
 
     </div>
 </body>

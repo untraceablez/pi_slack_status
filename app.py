@@ -33,7 +33,7 @@ if AUDIO_DEVICE is not None:
     AUDIO_DEVICE = int(AUDIO_DEVICE)
 
 SAMPLE_RATE = 44100
-RECORD_DURATION = 8       # seconds of audio to capture per recognition attempt
+RECORD_DURATION = 12      # seconds of audio to capture per recognition attempt
 RECOGNITION_INTERVAL = 30 # seconds between recognition attempts
 
 # --- Global State ---
@@ -45,6 +45,7 @@ current_track = {
     'cover_art': None,
     'last_checked': 0,
 }
+is_detecting = False
 music_lock = threading.Lock()
 
 # --- App Setup ---
@@ -80,13 +81,15 @@ def identify_track(wav_path):
     title = track.get('title')
     artist = track.get('subtitle')
     images = track.get('images', {})
-    cover_art = images.get('coverarthq') or images.get('coverart')
+    cover_art = (images.get('coverarthq')
+                 or images.get('coverart')
+                 or track.get('share', {}).get('image'))
     return title, artist, cover_art
 
 
 def music_recognition_loop():
     """Background thread: periodically records audio and identifies music."""
-    global current_track
+    global current_track, is_detecting
     while True:
         with music_lock:
             last_checked = current_track['last_checked']
@@ -94,6 +97,9 @@ def music_recognition_loop():
         if time.time() - last_checked >= RECOGNITION_INTERVAL:
             tmp_path = None
             try:
+                with music_lock:
+                    is_detecting = True
+
                 audio = record_audio()
                 with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                     tmp_path = f.name
@@ -108,11 +114,13 @@ def music_recognition_loop():
                         'cover_art': cover_art,
                         'last_checked': time.time(),
                     }
+                    is_detecting = False
                 print(f"Music identified: {artist} - {title}" if title else "No music detected.")
             except Exception as e:
                 print(f"Music recognition error: {e}")
                 with music_lock:
                     current_track['last_checked'] = time.time()
+                    is_detecting = False
             finally:
                 if tmp_path and os.path.exists(tmp_path):
                     os.unlink(tmp_path)
@@ -198,6 +206,7 @@ def home():
         track_title = current_track['title']
         track_artist = current_track['artist']
         track_cover_art = current_track['cover_art']
+        detecting = is_detecting
 
     if not status_data['ok']:
         return render_template('index.html',
@@ -208,7 +217,8 @@ def home():
                                is_error=True,
                                track_title=track_title,
                                track_artist=track_artist,
-                               track_cover_art=track_cover_art)
+                               track_cover_art=track_cover_art,
+                               is_detecting=detecting)
 
     return render_template('index.html',
                            first_name=status_data['first_name'],
@@ -218,7 +228,8 @@ def home():
                            is_error=False,
                            track_title=track_title,
                            track_artist=track_artist,
-                           track_cover_art=track_cover_art)
+                           track_cover_art=track_cover_art,
+                           is_detecting=detecting)
 
 
 @app.route('/debug-music')
