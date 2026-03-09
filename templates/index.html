@@ -46,15 +46,13 @@
 
             <div class="music-info">
                 <p class="music-label">Now Listening To:</p>
-                {% if is_detecting %}
-                    <p class="music-detecting">Detecting...</p>
-                {% elif track_title %}
+                {% if track_title %}
                     <p class="track-title">{{ track_title }}</p>
                     {% if track_artist %}
                         <p class="track-artist">{{ track_artist }}</p>
                     {% endif %}
                 {% else %}
-                    <p class="music-idle">No music detected</p>
+                    <p class="music-idle">Not playing</p>
                 {% endif %}
             </div>
         </div>

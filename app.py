@@ -1,138 +1,122 @@
 # app.py
-# This is a Python Flask web application that serves your Slack status and
-# identifies music playing nearby using a USB microphone via Shazam.
-# To run this, you need to have the packages in requirements.txt installed.
+# Flask web app that displays a user's Slack status and Last.fm now-playing track.
+# Required packages: see requirements.txt
 
 import os
-import asyncio
 import threading
-import tempfile
 import time
+import requests
 from flask import Flask, render_template, jsonify
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import emoji
-import sounddevice as sd
-import scipy.io.wavfile as wavfile
-import numpy as np
-from shazamio import Shazam
 
-# Load environment variables from the .env file.
 load_dotenv()
 
 # --- Configuration ---
 SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
-SLACK_USER_ID = os.environ.get('SLACK_USER_ID')
-PORT = 5000
+SLACK_USER_ID   = os.environ.get('SLACK_USER_ID')
+LASTFM_API_KEY  = os.environ.get('LAST_FM_API_KEY')
+LASTFM_USERNAME = os.environ.get('LAST_FM_USERNAME')
 
-# Audio device index for the USB mic. Set AUDIO_DEVICE in .env to the device
-# index if the default device is not your USB mic. Leave unset to use default.
-AUDIO_DEVICE = os.environ.get('AUDIO_DEVICE')
-if AUDIO_DEVICE is not None:
-    AUDIO_DEVICE = int(AUDIO_DEVICE)
-
-SAMPLE_RATE = 44100
-RECORD_DURATION = 12      # seconds of audio to capture per recognition attempt
-RECOGNITION_INTERVAL = 30 # seconds between recognition attempts
+PORT         = 5000
+POLL_INTERVAL = 30  # seconds between Last.fm polls
 
 # --- Global State ---
 custom_emojis = {}
 
 current_track = {
-    'title': None,
-    'artist': None,
+    'title':     None,
+    'artist':    None,
     'cover_art': None,
     'last_checked': 0,
 }
-is_detecting = False
 music_lock = threading.Lock()
 
 # --- App Setup ---
-app = Flask(__name__)
+app    = Flask(__name__)
 client = WebClient(token=SLACK_API_TOKEN)
 
-# --- Music Recognition ---
+# --- Last.fm ---
 
-def record_audio():
-    """Record a short clip from the USB mic and return as a numpy array."""
-    audio = sd.rec(
-        int(RECORD_DURATION * SAMPLE_RATE),
-        samplerate=SAMPLE_RATE,
-        channels=1,
-        dtype='int16',
-        device=AUDIO_DEVICE,
-    )
-    sd.wait()
-    rms = int(np.sqrt(np.mean(audio.astype(np.float32) ** 2)))
-    print(f"Audio captured: {len(audio)} samples, RMS level: {rms}")
-    return audio
+def get_lastfm_now_playing():
+    """
+    Fetches the currently playing track from Last.fm.
+    Returns (title, artist, cover_art) or (None, None, None) if nothing is playing.
+    """
+    if not LASTFM_API_KEY or not LASTFM_USERNAME:
+        print("Last.fm API key or username not configured.")
+        return None, None, None
+
+    try:
+        resp = requests.get(
+            'https://ws.audioscrobbler.com/2.0/',
+            params={
+                'method':  'user.getrecenttracks',
+                'user':    LASTFM_USERNAME,
+                'api_key': LASTFM_API_KEY,
+                'format':  'json',
+                'limit':   1,
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data   = resp.json()
+        tracks = data.get('recenttracks', {}).get('track', [])
+
+        if not tracks:
+            return None, None, None
+
+        track = tracks[0]
+
+        # Last.fm only sets @attr.nowplaying when the track is actively playing
+        if track.get('@attr', {}).get('nowplaying') != 'true':
+            return None, None, None
+
+        title  = track.get('name')
+        artist = track.get('artist', {}).get('#text')
+
+        # Pick the largest available image
+        cover_art = None
+        for img in reversed(track.get('image', [])):
+            url = img.get('#text', '').strip()
+            if url:
+                cover_art = url
+                break
+
+        return title, artist, cover_art
+
+    except Exception as e:
+        print(f"Last.fm error: {e}")
+        return None, None, None
 
 
-async def _shazam_recognize(wav_path):
-    shazam = Shazam()
-    return await shazam.recognize(wav_path)
-
-
-def identify_track(wav_path):
-    """Run Shazam recognition synchronously and return (title, artist, cover_art) or (None, None, None)."""
-    result = asyncio.run(_shazam_recognize(wav_path))
-    track = result.get('track', {})
-    title = track.get('title')
-    artist = track.get('subtitle')
-    images = track.get('images', {})
-    cover_art = (images.get('coverarthq')
-                 or images.get('coverart')
-                 or track.get('share', {}).get('image'))
-    return title, artist, cover_art
-
-
-def music_recognition_loop():
-    """Background thread: periodically records audio and identifies music."""
-    global current_track, is_detecting
+def lastfm_poll_loop():
+    """Background thread: polls Last.fm every POLL_INTERVAL seconds."""
+    global current_track
     while True:
         with music_lock:
             last_checked = current_track['last_checked']
 
-        if time.time() - last_checked >= RECOGNITION_INTERVAL:
-            tmp_path = None
-            try:
-                with music_lock:
-                    is_detecting = True
-
-                audio = record_audio()
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-                    tmp_path = f.name
-                    wavfile.write(f.name, SAMPLE_RATE, audio)
-
-                title, artist, cover_art = identify_track(tmp_path)
-
-                with music_lock:
-                    current_track = {
-                        'title': title,
-                        'artist': artist,
-                        'cover_art': cover_art,
-                        'last_checked': time.time(),
-                    }
-                    is_detecting = False
-                print(f"Music identified: {artist} - {title}" if title else "No music detected.")
-            except Exception as e:
-                print(f"Music recognition error: {e}")
-                with music_lock:
-                    current_track['last_checked'] = time.time()
-                    is_detecting = False
-            finally:
-                if tmp_path and os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
+        if time.time() - last_checked >= POLL_INTERVAL:
+            title, artist, cover_art = get_lastfm_now_playing()
+            with music_lock:
+                current_track = {
+                    'title':        title,
+                    'artist':       artist,
+                    'cover_art':    cover_art,
+                    'last_checked': time.time(),
+                }
+            print(f"Now playing: {artist} - {title}" if title else "Nothing playing.")
 
         time.sleep(5)
 
 
-# Start the music recognition background thread
-_music_thread = threading.Thread(target=music_recognition_loop, daemon=True)
-_music_thread.start()
+_poll_thread = threading.Thread(target=lastfm_poll_loop, daemon=True)
+_poll_thread.start()
 
-# --- Slack Functions ---
+# --- Slack ---
 
 def get_custom_emojis():
     """Fetches and caches all custom emojis from the Slack workspace."""
@@ -147,50 +131,50 @@ def get_custom_emojis():
     except SlackApiError as e:
         print(f"Error fetching custom emojis: {e.response['error']}")
     except Exception as e:
-        print(f"An unexpected error occurred while fetching emojis: {e}")
+        print(f"Unexpected error fetching emojis: {e}")
 
 
 def get_slack_status():
     """
-    Fetches the profile of the specified user from the Slack API.
-    Returns a dictionary with status information or an error message.
+    Fetches the Slack profile for SLACK_USER_ID.
+    Returns a dict with status info, or an error dict.
     """
     if not SLACK_API_TOKEN:
-        return {'ok': False, 'error': 'Slack API Token not found in environment variables.'}
+        return {'ok': False, 'error': 'SLACK_API_TOKEN not set.'}
     if not SLACK_USER_ID:
-        return {'ok': False, 'error': 'Slack User ID not found in environment variables.'}
+        return {'ok': False, 'error': 'SLACK_USER_ID not set.'}
 
     try:
         response = client.users_profile_get(user=SLACK_USER_ID)
 
         if response.get('ok'):
-            profile = response.get('profile', {})
-            first_name = profile.get('first_name', 'My')
-            status_text = profile.get('status_text', 'No status set')
-            status_emoji = profile.get('status_emoji', '')
+            profile      = response.get('profile', {})
+            first_name   = profile.get('first_name', 'My')
+            status_text  = profile.get('status_text', 'No status set')
+            status_emoji_raw = profile.get('status_emoji', '')
 
             emoji_info = {'type': 'text', 'value': ''}
-            if status_emoji:
-                emoji_name = status_emoji.strip(':')
+            if status_emoji_raw:
+                emoji_name = status_emoji_raw.strip(':')
                 if emoji_name in custom_emojis:
-                    emoji_info['type'] = 'url'
+                    emoji_info['type']  = 'url'
                     emoji_info['value'] = custom_emojis[emoji_name]
                 else:
-                    converted_emoji = emoji.emojize(status_emoji)
-                    emoji_info['value'] = converted_emoji
+                    emoji_info['value'] = emoji.emojize(status_emoji_raw)
 
             return {
-                'ok': True,
-                'first_name': first_name,
-                'status_text': status_text,
+                'ok':           True,
+                'first_name':   first_name,
+                'status_text':  status_text,
                 'status_emoji': emoji_info,
             }
         else:
             return {'ok': False, 'error': response.get('error', 'Unknown Slack API error')}
+
     except SlackApiError as e:
         return {'ok': False, 'error': f'Slack API Error: {e.response["error"]}'}
     except Exception as e:
-        return {'ok': False, 'error': f'An unexpected error occurred: {e}'}
+        return {'ok': False, 'error': f'Unexpected error: {e}'}
 
 
 # --- Routes ---
@@ -203,10 +187,9 @@ def home():
     status_data = get_slack_status()
 
     with music_lock:
-        track_title = current_track['title']
-        track_artist = current_track['artist']
+        track_title    = current_track['title']
+        track_artist   = current_track['artist']
         track_cover_art = current_track['cover_art']
-        detecting = is_detecting
 
     if not status_data['ok']:
         return render_template('index.html',
@@ -217,8 +200,7 @@ def home():
                                is_error=True,
                                track_title=track_title,
                                track_artist=track_artist,
-                               track_cover_art=track_cover_art,
-                               is_detecting=detecting)
+                               track_cover_art=track_cover_art)
 
     return render_template('index.html',
                            first_name=status_data['first_name'],
@@ -228,46 +210,23 @@ def home():
                            is_error=False,
                            track_title=track_title,
                            track_artist=track_artist,
-                           track_cover_art=track_cover_art,
-                           is_detecting=detecting)
+                           track_cover_art=track_cover_art)
 
 
 @app.route('/debug-music')
 def debug_music():
-    """
-    Forces an immediate audio capture and Shazam recognition attempt.
-    Returns the raw result as JSON for debugging.
-    """
-    tmp_path = None
-    try:
-        audio = record_audio()
-        rms = int(np.sqrt(np.mean(audio.astype(np.float32) ** 2)))
-
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-            tmp_path = f.name
-            wavfile.write(f.name, SAMPLE_RATE, audio)
-
-        title, artist, cover_art = identify_track(tmp_path)
-
-        return jsonify({
-            'ok': True,
-            'audio_rms': rms,
-            'audio_device': AUDIO_DEVICE,
-            'sample_rate': SAMPLE_RATE,
-            'record_duration': RECORD_DURATION,
-            'title': title,
-            'artist': artist,
-            'cover_art': cover_art,
-        })
-    except Exception as e:
-        return jsonify({'ok': False, 'error': str(e)}), 500
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+    """Forces an immediate Last.fm poll and returns the raw result as JSON."""
+    title, artist, cover_art = get_lastfm_now_playing()
+    return jsonify({
+        'ok':        True,
+        'title':     title,
+        'artist':    artist,
+        'cover_art': cover_art,
+    })
 
 
-# --- Main Entry Point ---
+# --- Main ---
 
 if __name__ == '__main__':
-    print(f"Starting Slack Status app on http://127.0.0.1:{PORT}")
+    print(f"Starting on http://0.0.0.0:{PORT}")
     app.run(host='0.0.0.0', port=PORT, debug=True)
