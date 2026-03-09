@@ -67,9 +67,13 @@
         <!-- Music Now Playing Section -->
         <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             {% if track_title %}
-                <p class="text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Now Playing</p>
-                <div class="flex items-center justify-center gap-3">
-                    <span class="text-2xl">🎵</span>
+                <p class="text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Now Playing</p>
+                <div class="flex items-center justify-center gap-4">
+                    {% if track_cover_art %}
+                        <img src="{{ track_cover_art }}" alt="Album art" class="w-16 h-16 rounded-lg shadow-md flex-shrink-0">
+                    {% else %}
+                        <span class="text-4xl flex-shrink-0">🎵</span>
+                    {% endif %}
                     <div class="text-left">
                         <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ track_title }}</p>
                         {% if track_artist %}

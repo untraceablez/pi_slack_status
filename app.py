@@ -8,7 +8,7 @@ import asyncio
 import threading
 import tempfile
 import time
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -42,6 +42,7 @@ custom_emojis = {}
 current_track = {
     'title': None,
     'artist': None,
+    'cover_art': None,
     'last_checked': 0,
 }
 music_lock = threading.Lock()
@@ -62,6 +63,8 @@ def record_audio():
         device=AUDIO_DEVICE,
     )
     sd.wait()
+    rms = int(np.sqrt(np.mean(audio.astype(np.float32) ** 2)))
+    print(f"Audio captured: {len(audio)} samples, RMS level: {rms}")
     return audio
 
 
@@ -71,12 +74,14 @@ async def _shazam_recognize(wav_path):
 
 
 def identify_track(wav_path):
-    """Run Shazam recognition synchronously and return (title, artist) or (None, None)."""
+    """Run Shazam recognition synchronously and return (title, artist, cover_art) or (None, None, None)."""
     result = asyncio.run(_shazam_recognize(wav_path))
     track = result.get('track', {})
     title = track.get('title')
     artist = track.get('subtitle')
-    return title, artist
+    images = track.get('images', {})
+    cover_art = images.get('coverarthq') or images.get('coverart')
+    return title, artist, cover_art
 
 
 def music_recognition_loop():
@@ -94,15 +99,15 @@ def music_recognition_loop():
                     tmp_path = f.name
                     wavfile.write(f.name, SAMPLE_RATE, audio)
 
-                title, artist = identify_track(tmp_path)
+                title, artist, cover_art = identify_track(tmp_path)
 
                 with music_lock:
-                    current_track = {
-                        'title': title,
-                        'artist': artist,
-                        'last_checked': time.time(),
-                    }
-                print(f"Music identified: {artist} - {title}" if title else "No music detected.")
+                    if title:
+                        current_track['title'] = title
+                        current_track['artist'] = artist
+                        current_track['cover_art'] = cover_art
+                    current_track['last_checked'] = time.time()
+                print(f"Music identified: {artist} - {title}" if title else "No music detected (keeping previous track).")
             except Exception as e:
                 print(f"Music recognition error: {e}")
                 with music_lock:
@@ -191,6 +196,7 @@ def home():
     with music_lock:
         track_title = current_track['title']
         track_artist = current_track['artist']
+        track_cover_art = current_track['cover_art']
 
     if not status_data['ok']:
         return render_template('index.html',
@@ -200,7 +206,8 @@ def home():
                                status_text=f"Error: {status_data['error']}",
                                is_error=True,
                                track_title=track_title,
-                               track_artist=track_artist)
+                               track_artist=track_artist,
+                               track_cover_art=track_cover_art)
 
     return render_template('index.html',
                            first_name=status_data['first_name'],
@@ -209,7 +216,42 @@ def home():
                            status_text=status_data['status_text'],
                            is_error=False,
                            track_title=track_title,
-                           track_artist=track_artist)
+                           track_artist=track_artist,
+                           track_cover_art=track_cover_art)
+
+
+@app.route('/debug-music')
+def debug_music():
+    """
+    Forces an immediate audio capture and Shazam recognition attempt.
+    Returns the raw result as JSON for debugging.
+    """
+    tmp_path = None
+    try:
+        audio = record_audio()
+        rms = int(np.sqrt(np.mean(audio.astype(np.float32) ** 2)))
+
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+            tmp_path = f.name
+            wavfile.write(f.name, SAMPLE_RATE, audio)
+
+        title, artist, cover_art = identify_track(tmp_path)
+
+        return jsonify({
+            'ok': True,
+            'audio_rms': rms,
+            'audio_device': AUDIO_DEVICE,
+            'sample_rate': SAMPLE_RATE,
+            'record_duration': RECORD_DURATION,
+            'title': title,
+            'artist': artist,
+            'cover_art': cover_art,
+        })
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 # --- Main Entry Point ---
