@@ -6,8 +6,8 @@
 
 # IMPORTANT: Replace 'pi' with your actual username if it's different.
 # This assumes your repository is cloned to /home/$USER_NAME/pi_slack_status.
-REPO_PATH="/home/$USER_NAME/Projects/pi_slack_status"
-VENV_PATH="/home/$USER_NAME/.venv/pi-slack"
+REPO_PATH="/home/ansible/Projects/pi_slack_status"
+VENV_PATH="/home/ansible/.venv/pi-slack"
 USER_NAME="ansible"
 
 # Navigate to the repository directory.
