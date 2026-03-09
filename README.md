@@ -2,7 +2,7 @@
 
 ## Intro
 
-This is a simple Python-based app for displaying your Slack status fullscreen on a Raspberry Pi. I designed the app around the display I'm [using](https://www.microcenter.com/product/632693/inland-35-inch-tft-lcd-touch-screen-monitor) but you can adjust the code to use whatever display output you need. 
+This is a simple Python-based app for displaying your Slack status fullscreen on a Raspberry Pi, along with your latest scrobbled [Last.fm](https://last.fm) track as a "now playing" feature. I designed the app around the display I'm [using](https://www.microcenter.com/product/632693/inland-35-inch-tft-lcd-touch-screen-monitor) but you can adjust the code to use whatever display output you need. 
 
 ![A preview of the rendered webpage.](./preview.png)
 
@@ -43,14 +43,21 @@ After installation, you'll see a "Bot User OAuth Token" (starts with xoxb-). Cop
 4. In the sidebar that appears, click the "..." menu next to "Edit Profile".
 5. Select "Copy member ID". It will look something like `U1234567890`. Save this along with your Bot Token from earlier.
 
+#### Last.fm
+##### Create Last.fm API Account
+1. Navigate to [https://www.last.fm/api/account/create](https://www.last.fm/api/account/create).
+2. Fill out the form, you don't need to fill out the "Callback URL" or "Application homepage" sections. 
+3. Save your newly created API Key and Secret, you'll need them. 
+
 #### Repository Setup
 1. Clone this repository: `git clone https://github.com/untraceablez/pi_slack_status` and then `cd pi_slack_status`.
 2. Create a Python virtual environment named *.venv* using this command: `python3 -m venv $HOME/.venv/pi-slack`
 3. Run `source $HOME/.venv/pi-slack/bin/activate`. 
 4. Run `pip install -r requirements.txt` to install the various Python dependencies.
-5. Create a `.env` file by copying `.env_sample`: `cp .env_sample .env`. 
-6. Paste in your User ID, API Token, and optionally, your Client Secret and Signing Secret (you'll need these if your Slack workspace enforces oAuth).
-7. Go ahead and test the application by running `python3 pi_slack_status.py`.
+5. Create a `.env` file by copying `.env_sample`: `cp .env_sample ~/.env`. 
+6. Open the `~/.env` file and paste in your User ID, API Token, and optionally, your Client Secret and Signing Secret (you'll need these if your Slack workspace enforces oAuth).
+7. For Last.fm, paste in your API Key, Secret, and username. 
+8. Go ahead and test the application by running `python3 pi_slack_status.py`.
 
  
 #### Setup as a Service
