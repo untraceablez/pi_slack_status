@@ -3,3 +3,6 @@ python_dotenv
 flask
 requests
 emoji
+sounddevice
+scipy
+shazamio

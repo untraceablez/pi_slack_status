@@ -6,16 +6,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ first_name }}'s Slack Status</title>
+    <title>{{ first_name }}'s Status</title>
     <!-- Use Tailwind CSS for easy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Link to the custom stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
-    <!-- Refresh the page every 30 seconds to get the latest status -->
+
+    <!-- Refresh the page every 10 seconds to get the latest status -->
     <meta http-equiv="refresh" content="10">
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const htmlElement = document.documentElement;
@@ -40,10 +40,10 @@
     </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
-    
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-12 max-w-lg text-center transform transition-all duration-300 hover:scale-105">
+
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-12 max-w-lg w-full text-center transform transition-all duration-300 hover:scale-105">
         <h1 class="text-5xl font-bold mb-6 text-gray-900 dark:text-gray-50">{{ first_name }}'s Slack Status</h1>
-        
+
         {% if is_error %}
             <div class="text-3xl font-semibold mb-3 text-red-500">
                 {{ status_emoji_value }}
@@ -63,6 +63,24 @@
                 {{ status_text }}
             </p>
         {% endif %}
+
+        <!-- Music Now Playing Section -->
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            {% if track_title %}
+                <p class="text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Now Playing</p>
+                <div class="flex items-center justify-center gap-3">
+                    <span class="text-2xl">🎵</span>
+                    <div class="text-left">
+                        <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ track_title }}</p>
+                        {% if track_artist %}
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ track_artist }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-400 dark:text-gray-600 italic">No music detected</p>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>

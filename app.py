@@ -1,46 +1,127 @@
 # app.py
-# This is a Python Flask web application that serves your Slack status.
-# To run this, you need to have Flask, python-dotenv, slack_sdk, and emoji installed:
-# pip install Flask python-dotenv slack_sdk emoji
+# This is a Python Flask web application that serves your Slack status and
+# identifies music playing nearby using a USB microphone via Shazam.
+# To run this, you need to have the packages in requirements.txt installed.
 
 import os
+import asyncio
+import threading
+import tempfile
+import time
 from flask import Flask, render_template
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import emoji
+import sounddevice as sd
+import scipy.io.wavfile as wavfile
+import numpy as np
+from shazamio import Shazam
 
 # Load environment variables from the .env file.
 load_dotenv()
 
 # --- Configuration ---
-# Get your Slack API token from the .env file.
-# The token needs the 'users.profile:read' scope.
 SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
-
-# Get the Slack User ID from the .env file.
-# This is the user whose status will be displayed.
 SLACK_USER_ID = os.environ.get('SLACK_USER_ID')
-
-# You can change the port if you need to.
 PORT = 5000
 
-# Global variable to cache custom emojis
+# Audio device index for the USB mic. Set AUDIO_DEVICE in .env to the device
+# index if the default device is not your USB mic. Leave unset to use default.
+AUDIO_DEVICE = os.environ.get('AUDIO_DEVICE')
+if AUDIO_DEVICE is not None:
+    AUDIO_DEVICE = int(AUDIO_DEVICE)
+
+SAMPLE_RATE = 44100
+RECORD_DURATION = 8       # seconds of audio to capture per recognition attempt
+RECOGNITION_INTERVAL = 30 # seconds between recognition attempts
+
+# --- Global State ---
 custom_emojis = {}
+
+current_track = {
+    'title': None,
+    'artist': None,
+    'last_checked': 0,
+}
+music_lock = threading.Lock()
 
 # --- App Setup ---
 app = Flask(__name__)
-
-# Initialize the Slack WebClient with your token
-# This is the primary way to interact with the Slack API using the SDK.
 client = WebClient(token=SLACK_API_TOKEN)
 
-# --- Functions ---
+# --- Music Recognition ---
+
+def record_audio():
+    """Record a short clip from the USB mic and return as a numpy array."""
+    audio = sd.rec(
+        int(RECORD_DURATION * SAMPLE_RATE),
+        samplerate=SAMPLE_RATE,
+        channels=1,
+        dtype='int16',
+        device=AUDIO_DEVICE,
+    )
+    sd.wait()
+    return audio
+
+
+async def _shazam_recognize(wav_path):
+    shazam = Shazam()
+    return await shazam.recognize(wav_path)
+
+
+def identify_track(wav_path):
+    """Run Shazam recognition synchronously and return (title, artist) or (None, None)."""
+    result = asyncio.run(_shazam_recognize(wav_path))
+    track = result.get('track', {})
+    title = track.get('title')
+    artist = track.get('subtitle')
+    return title, artist
+
+
+def music_recognition_loop():
+    """Background thread: periodically records audio and identifies music."""
+    global current_track
+    while True:
+        with music_lock:
+            last_checked = current_track['last_checked']
+
+        if time.time() - last_checked >= RECOGNITION_INTERVAL:
+            tmp_path = None
+            try:
+                audio = record_audio()
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                    tmp_path = f.name
+                    wavfile.write(f.name, SAMPLE_RATE, audio)
+
+                title, artist = identify_track(tmp_path)
+
+                with music_lock:
+                    current_track = {
+                        'title': title,
+                        'artist': artist,
+                        'last_checked': time.time(),
+                    }
+                print(f"Music identified: {artist} - {title}" if title else "No music detected.")
+            except Exception as e:
+                print(f"Music recognition error: {e}")
+                with music_lock:
+                    current_track['last_checked'] = time.time()
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+
+        time.sleep(5)
+
+
+# Start the music recognition background thread
+_music_thread = threading.Thread(target=music_recognition_loop, daemon=True)
+_music_thread.start()
+
+# --- Slack Functions ---
 
 def get_custom_emojis():
-    """
-    Fetches and caches all custom emojis from the Slack workspace.
-    """
+    """Fetches and caches all custom emojis from the Slack workspace."""
     global custom_emojis
     try:
         response = client.emoji_list()
@@ -54,25 +135,18 @@ def get_custom_emojis():
     except Exception as e:
         print(f"An unexpected error occurred while fetching emojis: {e}")
 
+
 def get_slack_status():
     """
-    Fetches the profile of the specified user from the Slack API using slack_sdk.
+    Fetches the profile of the specified user from the Slack API.
     Returns a dictionary with status information or an error message.
     """
-    # Check if necessary environment variables are set
     if not SLACK_API_TOKEN:
-        return {
-            'ok': False,
-            'error': 'Slack API Token not found in environment variables.'
-        }
+        return {'ok': False, 'error': 'Slack API Token not found in environment variables.'}
     if not SLACK_USER_ID:
-        return {
-            'ok': False,
-            'error': 'Slack User ID not found in environment variables.'
-        }
-    
+        return {'ok': False, 'error': 'Slack User ID not found in environment variables.'}
+
     try:
-        # Call the users_profile_get API method with the specified user ID
         response = client.users_profile_get(user=SLACK_USER_ID)
 
         if response.get('ok'):
@@ -80,22 +154,16 @@ def get_slack_status():
             first_name = profile.get('first_name', 'My')
             status_text = profile.get('status_text', 'No status set')
             status_emoji = profile.get('status_emoji', '')
-            
-            # --- Emoji Handling Logic ---
+
             emoji_info = {'type': 'text', 'value': ''}
             if status_emoji:
-                # Get the name of the emoji without the colons
                 emoji_name = status_emoji.strip(':')
-
-                # Check if the emoji is a custom one by looking it up in our cached list
                 if emoji_name in custom_emojis:
                     emoji_info['type'] = 'url'
                     emoji_info['value'] = custom_emojis[emoji_name]
                 else:
-                    # It's a shortcode, so use the 'emoji' library to convert it.
                     converted_emoji = emoji.emojize(status_emoji)
                     emoji_info['value'] = converted_emoji
-            # --- End of Emoji Handling ---
 
             return {
                 'ok': True,
@@ -104,57 +172,48 @@ def get_slack_status():
                 'status_emoji': emoji_info,
             }
         else:
-            return {
-                'ok': False,
-                'error': response.get('error', 'Unknown Slack API error')
-            }
+            return {'ok': False, 'error': response.get('error', 'Unknown Slack API error')}
     except SlackApiError as e:
-        # Handle API-related errors
-        return {
-            'ok': False,
-            'error': f'Slack API Error: {e.response["error"]}'
-        }
+        return {'ok': False, 'error': f'Slack API Error: {e.response["error"]}'}
     except Exception as e:
-        # Handle other unexpected errors
-        return {
-            'ok': False,
-            'error': f'An unexpected error occurred: {e}'
-        }
+        return {'ok': False, 'error': f'An unexpected error occurred: {e}'}
+
 
 # --- Routes ---
 
 @app.route('/')
 def home():
-    """
-    This is the main route. It fetches the Slack status and renders
-    the HTML template to display it.
-    """
-    # Fetch custom emojis once when the app starts
     if not custom_emojis:
         get_custom_emojis()
 
     status_data = get_slack_status()
 
+    with music_lock:
+        track_title = current_track['title']
+        track_artist = current_track['artist']
+
     if not status_data['ok']:
-        return render_template('index.html', 
+        return render_template('index.html',
                                first_name='My',
-                               status_emoji_value='❌', 
+                               status_emoji_value='❌',
                                status_emoji_type='text',
                                status_text=f"Error: {status_data['error']}",
-                               is_error=True)
+                               is_error=True,
+                               track_title=track_title,
+                               track_artist=track_artist)
 
     return render_template('index.html',
                            first_name=status_data['first_name'],
                            status_emoji_value=status_data['status_emoji']['value'],
                            status_emoji_type=status_data['status_emoji']['type'],
                            status_text=status_data['status_text'],
-                           is_error=False)
+                           is_error=False,
+                           track_title=track_title,
+                           track_artist=track_artist)
 
 
 # --- Main Entry Point ---
 
 if __name__ == '__main__':
-    # Running this with debug=True is good for development.
-    # When running as a daemon, you might want to set debug=False.
     print(f"Starting Slack Status app on http://127.0.0.1:{PORT}")
     app.run(host='0.0.0.0', port=PORT, debug=True)
