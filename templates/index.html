@@ -39,9 +39,9 @@
         <!-- Music Row -->
         <div class="row">
             <div class="vinyl-case">
-                <img src="/static/vinyl.png" alt="" class="vinyl-disc">
-                <img src="{{ track_cover_art if track_cover_art else '/static/noartwork.png' }}" alt="Album art" class="vinyl-art">
-                <img src="/static/case.png" alt="" class="vinyl-jewel">
+                <img src="{{ url_for('static', filename='vinyl.png') }}" alt="" class="vinyl-disc">
+                <img src="{{ track_cover_art if track_cover_art else url_for('static', filename='noartwork.png') }}" alt="Album art" class="vinyl-art">
+                <img src="{{ url_for('static', filename='case.png') }}" alt="" class="vinyl-jewel">
             </div>
 
             <div class="music-info">

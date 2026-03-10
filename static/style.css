@@ -73,17 +73,17 @@ body {
 /* Vinyl record case */
 .vinyl-case {
     position: relative;
-    width: 240px;
-    height: 200px;
+    width: 168px;
+    height: 140px;
     flex-shrink: 0;
 }
 
 .vinyl-disc {
     position: absolute;
-    left: 65px;
-    top: 13px;
-    width: 175px;
-    height: 175px;
+    left: 46px;
+    top: 9px;
+    width: 122px;
+    height: 122px;
     z-index: 1;
     animation: vinyl-spin 4s linear infinite;
 }
@@ -92,8 +92,8 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 200px;
-    height: 200px;
+    width: 140px;
+    height: 140px;
     object-fit: cover;
     z-index: 2;
 }
@@ -102,8 +102,8 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 200px;
-    height: 200px;
+    width: 140px;
+    height: 140px;
     z-index: 3;
     pointer-events: none;
 }
