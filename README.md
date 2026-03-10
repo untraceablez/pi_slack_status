@@ -1,5 +1,26 @@
 # Pi Slack Status
 
+## Table of Contents
+
+- [Pi Slack Status](#pi-slack-status)
+  - [Table of Contents](#table-of-contents)
+  - [Intro](#intro)
+  - [Dependencies \& Setup](#dependencies--setup)
+    - [Hardware Requirements](#hardware-requirements)
+    - [Setup](#setup)
+      - [OS Setup](#os-setup)
+      - [Slack](#slack)
+        - [Create a Slack App:](#create-a-slack-app)
+        - [Add Scopes:](#add-scopes)
+        - [Install App to Workspace:](#install-app-to-workspace)
+        - [Get Bot User OAuth Token:](#get-bot-user-oauth-token)
+        - [Find your Slack User ID:](#find-your-slack-user-id)
+      - [Last.fm](#lastfm)
+        - [Create Last.fm API Account](#create-lastfm-api-account)
+      - [Repository Setup](#repository-setup)
+      - [Setup as a Service](#setup-as-a-service)
+
+
 ## Intro
 
 This is a simple Python-based app for displaying your Slack status fullscreen on a Raspberry Pi, along with your latest scrobbled [Last.fm](https://last.fm) track as a "now playing" feature. I designed the app around the display I'm [using](https://www.microcenter.com/product/632693/inland-35-inch-tft-lcd-touch-screen-monitor) but you can adjust the code to use whatever display output you need. 
@@ -9,7 +30,7 @@ This is a simple Python-based app for displaying your Slack status fullscreen on
 ## Dependencies & Setup
 
 ### Hardware Requirements
-* A Raspberry Pi. (Any model that can run Python 3 should work, but as a warning, this was only tested on a Raspberry Pi 5.)
+* A Raspberry Pi. (Any model that can run Python 3 should work, but as a warning, this was only tested on a Raspberry Pi 3B.)
 * A hardware display. 
 * SSH accesss to the Raspberry Pi.
   
