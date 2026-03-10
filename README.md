@@ -25,7 +25,13 @@
 
 This is a simple Python-based app for displaying your Slack status fullscreen on a Raspberry Pi, along with your latest scrobbled [Last.fm](https://last.fm) track as a "now playing" feature. I designed the app around the display I'm [using](https://www.microcenter.com/product/632693/inland-35-inch-tft-lcd-touch-screen-monitor) but you can adjust the code to use whatever display output you need. 
 
+Static Preview:
+
 ![A preview of the rendered webpage.](./preview.png)
+
+Live Preview:
+
+![A GIF preview of it in action!](./preview.gif)
 
 ## Dependencies & Setup
 
