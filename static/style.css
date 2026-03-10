@@ -146,10 +146,10 @@ body {
 
 .vinyl-jewel {
     position: absolute;
-    top: -12px;
-    left: -12px;
-    width: 164px;
-    height: 164px;
+    top: -15px;
+    left: -20px;
+    width: 174px;
+    height: 174px;
     z-index: 3;
     pointer-events: none;
 }
