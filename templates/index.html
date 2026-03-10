@@ -38,11 +38,11 @@
 
         <!-- Music Row -->
         <div class="row">
-            {% if track_cover_art %}
-                <img src="{{ track_cover_art }}" alt="Album art" class="cover-art">
-            {% else %}
-                <div class="cover-placeholder">🎵</div>
-            {% endif %}
+            <div class="vinyl-case">
+                <img src="/static/vinyl.png" alt="" class="vinyl-disc">
+                <img src="{{ track_cover_art if track_cover_art else '/static/noartwork.png' }}" alt="Album art" class="vinyl-art">
+                <img src="/static/case.png" alt="" class="vinyl-jewel">
+            </div>
 
             <div class="music-info">
                 <p class="music-label">Recently Listening To:</p>

@@ -70,26 +70,47 @@ body {
     border-top: 1px solid rgba(255,255,255,0.3);
 }
 
-/* Album art */
-.cover-art {
-    width: 6rem;
-    height: 6rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+/* Vinyl record case */
+.vinyl-case {
+    position: relative;
+    width: 240px;
+    height: 200px;
     flex-shrink: 0;
-    object-fit: cover;
 }
 
-.cover-placeholder {
-    width: 6rem;
-    height: 6rem;
-    border-radius: 0.5rem;
-    background: rgba(255,255,255,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    flex-shrink: 0;
+.vinyl-disc {
+    position: absolute;
+    left: 65px;
+    top: 13px;
+    width: 175px;
+    height: 175px;
+    z-index: 1;
+    animation: vinyl-spin 4s linear infinite;
+}
+
+.vinyl-art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    z-index: 2;
+}
+
+.vinyl-jewel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+    z-index: 3;
+    pointer-events: none;
+}
+
+@keyframes vinyl-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Music info block */
