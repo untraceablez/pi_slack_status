@@ -29,7 +29,7 @@ Static Preview:
 
 ![A preview of the rendered webpage.](./preview.png)
 
-Live Preview:
+Live Preview: (The color is a lot more like the static, just had to heavily compress the GIF for upload.)
 
 ![A GIF preview of it in action!](./preview.gif)
 
