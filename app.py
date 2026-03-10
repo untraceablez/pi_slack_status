@@ -29,6 +29,7 @@ custom_emojis = {}
 current_track = {
     'title':     None,
     'artist':    None,
+    'album':     None,
     'cover_art': None,
     'last_checked': 0,
 }
@@ -76,6 +77,7 @@ def get_lastfm_now_playing():
 
         title  = track.get('name')
         artist = track.get('artist', {}).get('#text')
+        album  = track.get('album', {}).get('#text') or None
 
         # Pick the largest available image, skipping Last.fm's blank placeholder
         cover_art = None
@@ -85,11 +87,11 @@ def get_lastfm_now_playing():
                 cover_art = url
                 break
 
-        return title, artist, cover_art
+        return title, artist, album, cover_art
 
     except Exception as e:
         print(f"Last.fm error: {e}")
-        return None, None, None
+        return None, None, None, None
 
 
 def lastfm_poll_loop():
@@ -100,11 +102,12 @@ def lastfm_poll_loop():
             last_checked = current_track['last_checked']
 
         if time.time() - last_checked >= POLL_INTERVAL:
-            title, artist, cover_art = get_lastfm_now_playing()
+            title, artist, album, cover_art = get_lastfm_now_playing()
             with music_lock:
                 if title:
                     current_track['title']     = title
                     current_track['artist']    = artist
+                    current_track['album']     = album
                     current_track['cover_art'] = cover_art
                 current_track['last_checked'] = time.time()
             print(f"Now playing: {artist} - {title}" if title else "Nothing playing.")
@@ -186,8 +189,9 @@ def home():
     status_data = get_slack_status()
 
     with music_lock:
-        track_title    = current_track['title']
-        track_artist   = current_track['artist']
+        track_title     = current_track['title']
+        track_artist    = current_track['artist']
+        track_album     = current_track['album']
         track_cover_art = current_track['cover_art']
 
     if not status_data['ok']:
@@ -199,6 +203,7 @@ def home():
                                is_error=True,
                                track_title=track_title,
                                track_artist=track_artist,
+                               track_album=track_album,
                                track_cover_art=track_cover_art)
 
     return render_template('index.html',
@@ -209,7 +214,23 @@ def home():
                            is_error=False,
                            track_title=track_title,
                            track_artist=track_artist,
+                           track_album=track_album,
                            track_cover_art=track_cover_art)
+
+
+@app.route('/preview')
+def preview():
+    """Renders the page with hardcoded dummy data for local layout testing."""
+    return render_template('index.html',
+                           first_name='Taylor',
+                           status_emoji_value='🎵',
+                           status_emoji_type='text',
+                           status_text='Available, feel free to DM or walk by.',
+                           is_error=False,
+                           track_title='Mr. Blue Sky',
+                           track_artist='Electric Light Orchestra',
+                           track_album='Out of the Blue',
+                           track_cover_art='/static/elo-outoftheblue.jpg')
 
 
 @app.route('/debug-music')
@@ -223,7 +244,7 @@ def debug_music():
 
     raw_response = None
     parse_error  = None
-    title = artist = cover_art = None
+    title = artist = album = cover_art = None
 
     try:
         resp = requests.get(
@@ -238,7 +259,7 @@ def debug_music():
             timeout=10,
         )
         raw_response = resp.json()
-        title, artist, cover_art = get_lastfm_now_playing()
+        title, artist, album, cover_art = get_lastfm_now_playing()
     except Exception as e:
         parse_error = str(e)
 

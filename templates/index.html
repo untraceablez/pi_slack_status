@@ -41,7 +41,8 @@
             <div class="vinyl-case">
                 <img src="{{ url_for('static', filename='vinyl.png') }}" alt="" class="vinyl-disc">
                 <img src="{{ track_cover_art if track_cover_art else url_for('static', filename='noartwork.png') }}" alt="Album art" class="vinyl-art">
-                <img src="{{ url_for('static', filename='case.png') }}" alt="" class="vinyl-jewel">
+                <div class="vinyl-gloss"></div>
+                <img src="{{ url_for('static', filename='tab.png') }}" alt="" class="vinyl-tab">
             </div>
 
             <div class="music-info">
@@ -49,7 +50,7 @@
                 {% if track_title %}
                     <p class="track-title">{{ track_title }}</p>
                     {% if track_artist %}
-                        <p class="track-artist">{{ track_artist }}</p>
+                        <p class="track-artist">{{ track_artist }}{% if track_album %} — {{ track_album }}{% endif %}</p>
                     {% endif %}
                 {% else %}
                     <p class="music-idle">Not playing</p>
